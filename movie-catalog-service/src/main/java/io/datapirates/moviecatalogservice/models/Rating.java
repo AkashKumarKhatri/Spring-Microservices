@@ -1,5 +1,6 @@
 package io.datapirates.moviecatalogservice.models;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -7,12 +8,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class Rating {
     private String movieId;
     private int rating;
-
-    public Rating(String movieId, int rating) {
-        this.movieId = movieId;
-        this.rating = rating;
-    }
 }
