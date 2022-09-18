@@ -1,5 +1,6 @@
 package io.datapirates.moviecatalogservice.resources;
 
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import io.datapirates.moviecatalogservice.models.CatalogItem;
 import io.datapirates.moviecatalogservice.models.Movie;
 import io.datapirates.moviecatalogservice.models.Rating;
@@ -23,34 +24,17 @@ public class MovieCatalogResources {
     @Autowired
     private RestTemplate restTemplate;
 
-    @Autowired
-    private WebClient.Builder webClientBuilder;
-
     @RequestMapping("/{userId}")
+    @HystrixCommand(fallbackMethod = "getFallbackCatalog")
     List<CatalogItem> getCatalog(@PathVariable("userId") String userId) {
-
-        /*List<Rating> ratings = Arrays.asList(
-                new Rating("1234", 4),
-                new Rating("5678", 3)
-        );*/
-
-        //UserRating ratings = restTemplate.getForObject("http://localhost:8083/ratingsdata/users/"+userId, UserRating.class);
         UserRating ratings = restTemplate.getForObject("http://rating-data-service/ratingsdata/users/"+userId, UserRating.class);
         return ratings.getUserRating().stream().map(rating -> {
-            //Movie movie = restTemplate.getForObject("http://localhost:8082/movies/"+rating.getMovieId(), Movie.class);
             Movie movie = restTemplate.getForObject("http://movie-info-service/movies/"+rating.getMovieId(), Movie.class);
-            /*Movie movie = webClientBuilder.build()
-                    .get()
-                    .uri("http://localhost:8082/movies/"+rating.getMovieId())
-                    .retrieve()
-                    .bodyToMono(Movie.class)
-                    .block();*/
-
             return new CatalogItem(movie.getTitle(), movie.getOverview(), rating.getRating());
         }).collect(Collectors.toList());
+    }
 
-        /*return Collections.singletonList(
-                new CatalogItem("Transformer", "Test", 4)
-        );*/
+    List<CatalogItem> getFallbackCatalog(@PathVariable("userId") String userId) {
+        return Arrays.asList(new CatalogItem("No Movie", "", 0));
     }
 }
