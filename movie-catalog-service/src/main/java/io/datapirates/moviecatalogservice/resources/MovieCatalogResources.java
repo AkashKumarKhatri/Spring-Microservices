@@ -5,6 +5,8 @@ import io.datapirates.moviecatalogservice.models.CatalogItem;
 import io.datapirates.moviecatalogservice.models.Movie;
 import io.datapirates.moviecatalogservice.models.Rating;
 import io.datapirates.moviecatalogservice.models.UserRating;
+import io.datapirates.moviecatalogservice.services.MovieInfo;
+import io.datapirates.moviecatalogservice.services.UserRatingInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,17 +26,18 @@ public class MovieCatalogResources {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private MovieInfo movieInfo;
+
+    @Autowired
+    private UserRatingInfo userRatingInfo;
+
     @RequestMapping("/{userId}")
-    @HystrixCommand(fallbackMethod = "getFallbackCatalog")
     List<CatalogItem> getCatalog(@PathVariable("userId") String userId) {
-        UserRating ratings = restTemplate.getForObject("http://rating-data-service/ratingsdata/users/"+userId, UserRating.class);
-        return ratings.getUserRating().stream().map(rating -> {
-            Movie movie = restTemplate.getForObject("http://movie-info-service/movies/"+rating.getMovieId(), Movie.class);
-            return new CatalogItem(movie.getTitle(), movie.getOverview(), rating.getRating());
-        }).collect(Collectors.toList());
+        UserRating ratings = userRatingInfo.getUserRating(userId);
+        return ratings.getUserRating().stream()
+                .map(rating -> movieInfo.getCatalogItem(rating))
+                .collect(Collectors.toList());
     }
 
-    List<CatalogItem> getFallbackCatalog(@PathVariable("userId") String userId) {
-        return Arrays.asList(new CatalogItem("No Movie", "", 0));
-    }
 }

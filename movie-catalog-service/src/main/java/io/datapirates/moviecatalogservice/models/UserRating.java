@@ -8,5 +8,6 @@ import java.util.List;
 @Getter
 @Setter
 public class UserRating {
+    private String userId;
     private List<Rating> userRating;
 }
