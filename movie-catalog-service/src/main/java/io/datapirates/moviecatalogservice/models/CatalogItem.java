@@ -10,7 +10,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CatalogItem {
-    private String name;
-    private String desc;
+    private String title;
+    private String overview;
     private int rating;
 }
